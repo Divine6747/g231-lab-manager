@@ -1,0 +1,950 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>G231 Lab Manager</title>
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css">
+    <link rel="stylesheet" href="https://cdn.datatables.net/responsive/2.5.0/css/responsive.dataTables.min.css">
+    <script src="https://kit.fontawesome.com/75b24b3695.js" crossorigin="anonymous"></script>
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f7f6;
+            line-height: 1.6;
+        }
+
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+            margin-bottom: 20px;
+            max-width: 1200px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .form-section {
+            background: #e9ecef;
+            padding: 15px;
+            border-radius: 8px;
+        }
+
+        .btn {
+            padding: 8px 12px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            color: white;
+            text-decoration: none;
+            font-size: 0.9em;
+            display: inline-block;
+            text-align: center;
+        }
+
+        .btn-add {
+            background-color: #007bff;
+        }
+
+        .btn-save {
+            background-color: #28a745;
+        }
+
+        .btn-delete {
+            color: #dc3545;
+            font-size: 0.8em;
+            margin-left: 8px;
+            background: none;
+            border: none;
+            text-decoration: none;
+            cursor: pointer;
+        }
+
+        .management-buttons {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .management-buttons .btn {
+            flex: 1;
+            min-width: 160px;
+        }
+
+        h2, h3 {
+            margin-top: 0;
+            color: #2c3e50;
+        }
+
+        h2 {
+            padding-bottom: 10px;
+        }
+
+        /* Table container */
+        .table-container {
+            margin: 20px 0;
+            border-radius: 8px;
+            border: 1px solid #dee2e6;
+        }
+
+        /* Toast Notification */
+        #undoToast {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #333;
+            color: white;
+            padding: 15px 25px;
+            border-radius: 8px;
+            z-index: 1000;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            transition: opacity 0.5s;
+        }
+
+        /* Column Management */
+        .column-tag {
+            background: #e3f2fd;
+            padding: 5px 10px;
+            border-radius: 4px;
+            margin: 5px;
+            display: inline-block;
+            border: 1px solid #bbdefb;
+        }
+
+        .column-input {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ced4da;
+            border-radius: 4px;
+            margin-bottom: 5px;
+        }
+
+        /* Mobile-Specific Styles */
+        @media (max-width: 768px) {
+            .container {
+                padding: 15px;
+                margin: 10px;
+                border-radius: 6px;
+            }
+
+            body {
+                padding: 10px;
+            }
+
+            .management-buttons .btn {
+                min-width: 140px;
+                font-size: 0.85em;
+                padding: 8px 12px;
+            }
+
+            #undoToast {
+                top: 10px;
+                right: 10px;
+                left: 10px;
+                max-width: none;
+                text-align: center;
+            }
+
+            h2 {
+                font-size: 1.5em;
+            }
+
+            h3 {
+                font-size: 1.2em;
+            }
+
+            .add-form input,
+            .add-form button {
+                width: 100%;
+            }
+
+            .column-tag {
+                font-size: 0.9em;
+                padding: 4px 8px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .container {
+                padding: 12px;
+                margin: 5px;
+            }
+
+            .btn {
+                padding: 6px 10px;
+                font-size: 0.85em;
+            }
+
+            .actions-column {
+                min-width: 100px;
+            }
+
+            .bulk-actions {
+                flex-direction: column;
+            }
+
+            .bulk-actions input,
+            .bulk-actions button {
+                width: 100%;
+                margin-bottom: 8px;
+            }
+        }
+
+        /* DataTables Customization */
+        .dataTables_wrapper {
+            margin-top: 20px;
+        }
+
+        .dataTables_filter input {
+            padding: 8px 12px;
+            border-radius: 4px;
+            border: 1px solid #ced4da;
+        }
+
+        .dataTables_length select {
+            padding: 8px;
+            border-radius: 4px;
+        }
+
+        /* Bulk Actions Styling */
+        .bulk-actions {
+            background: #fff3cd;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+        }
+
+        .bulk-form {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .bulk-form input[type="text"] {
+            flex: 1;
+            min-width: 150px;
+        }
+
+        /* Checkbox Styling */
+        .bulk-check {
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+        }
+
+        /* Action Buttons Container */
+        .action-buttons {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+            align-items: center;
+        }
+
+        /* Status Indicator for Mobile */
+        .mobile-status {
+            display: none;
+            font-size: 0.8em;
+            color: #666;
+            margin-top: 5px;
+        }
+
+        @media (max-width: 768px) {
+            .mobile-status {
+                display: block;
+            }
+        }
+
+        /* Custom Column Form */
+        .column-form {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .column-form input,
+        .column-form select {
+            padding: 8px 12px;
+            border: 1px solid #ced4da;
+            border-radius: 4px;
+            flex: 1;
+            min-width: 150px;
+        }
+    </style>
+</head>
+<body>
+
+    {% if session.get('show_undo') %}
+    <div id="undoToast">
+        <span>Changes Saved.</span>
+        <a href="/undo" style="color: #ffc107; text-decoration: none; font-weight: bold; border: 1px solid #ffc107; padding: 2px 8px; border-radius: 4px;">UNDO</a>
+    </div>
+    {% endif %}
+
+    <!-- System Management Section -->
+    <div class="container">
+        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px;">
+            <div>
+                <h2>System Management</h2>
+                <p class="mobile-status">Manage lab equipment inventory</p>
+            </div>
+            <div class="management-buttons">
+                <a href="/download_backup" class="btn" style="background-color: #6c757d;">
+                    <i class="fa-solid fa-database"></i> Backup DB
+                </a>
+                <a href="/download_csv" class="btn" style="background-color: #28a745;">
+                    <i class="fa-solid fa-file-csv"></i> Export CSV
+                </a>
+                {% if not is_windows %}
+                <a href="/download_pdf" class="btn" style="background-color: #17a2b8;">
+                    <i class="fa-solid fa-file-pdf"></i> Report PDF
+                </a>
+                {% else %}
+                <span style="color: #d9534f; font-weight: bold; font-size: 0.9em; display: flex; align-items: center; padding: 10px;">
+                    <i class="fa-solid fa-server"></i> PDF Disabled (Server Only)
+                </span>
+                {% endif %}
+                <!-- SAVE ALL BUTTON -->
+                <button type="button" class="btn" id="saveAllBtn" style="background-color: #6610f2;">
+                    <i class="fa-solid fa-save"></i> Save All Changes
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add New Lab Asset Form (WITH CUSTOM COLUMNS) -->
+    <div class="container">
+        <div class="form-section">
+            <h3>Add New Lab Asset</h3>
+            <form action="/add_item" method="POST" id="addItemForm">
+                <!-- Core Fields -->
+                <div style="display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 15px;">
+                    <input type="text" name="zone" placeholder="Zone" style="width:60px;" required>
+                    <input type="text" name="name" placeholder="Item Name" style="flex: 1;" required>
+                    <input type="text" name="id_val" placeholder="Serial/MAC ID" style="flex: 1;">
+                    <input type="text" name="notes" placeholder="Notes" style="flex: 1;">
+                    <input type="number" step="0.1" name="power" placeholder="Amps" style="width:70px;">
+                </div>
+
+                <!-- Custom Columns Section -->
+                {% if custom_columns %}
+                <div class="custom-columns-section" style="margin-bottom: 15px; padding: 10px; background: #f8f9fa; border-radius: 4px;">
+                    <h4 style="margin-top: 0; margin-bottom: 10px; font-size: 1em; color: #495057;">Additional Information</h4>
+                    <div style="display: flex; flex-wrap: wrap; gap: 8px;">
+                        {% for col_name, display_name, col_type in custom_columns %}
+                        <div style="flex: 1; min-width: 150px;">
+                            <label class="form-label">
+                                {{ display_name or col_name.replace('custom_', '') }}
+                            </label>
+                            {% if col_type in ['INTEGER', 'REAL'] %}
+                            <input type="number"
+                                   {% if col_type == 'REAL' %}step="0.01"{% endif %}
+                                   name="{{ col_name }}"
+                                   placeholder="{{ display_name or col_name.replace('custom_', '') }}"
+                                   style="width: 100%; padding: 8px; border: 1px solid #ced4da; border-radius: 4px;">
+                            {% elif col_type == 'DATE' %}
+                            <input type="date"
+                                   name="{{ col_name }}"
+                                   style="width: 100%; padding: 8px; border: 1px solid #ced4da; border-radius: 4px;">
+                            {% else %}
+                            <input type="text"
+                                   name="{{ col_name }}"
+                                   placeholder="{{ display_name or col_name.replace('custom_', '') }}"
+                                   style="width: 100%; padding: 8px; border: 1px solid #ced4da; border-radius: 4px;">
+                            {% endif %}
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
+
+                <div style="text-align: center;">
+                    <button type="submit" class="btn btn-add" style="width: 100%; max-width: 300px; margin: 0 auto; display: block;">
+                        Add to Inventory
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Custom Columns Management -->
+    <div class="container form-section" style="background-color: #e3f2fd;">
+        <h3>Manage Custom Columns</h3>
+        <form action="/add_column" method="POST" class="column-form">
+            <input type="text" name="column_name" placeholder="Column Name (e.g., Warranty Expiry)" required>
+            <input type="text" name="display_name" placeholder="Display Name (optional)">
+            <select name="column_type">
+                <option value="TEXT">Text</option>
+                <option value="INTEGER">Number</option>
+                <option value="REAL">Decimal</option>
+                <option value="DATE">Date</option>
+            </select>
+            <button type="submit" class="btn" style="background-color: #2196f3;">
+                Add Column
+            </button>
+        </form>
+
+        <div style="margin-top: 10px;">
+            <small style="color: #666;">Existing custom columns:</small>
+            <div id="customColumnsList">
+                {% for col in custom_columns %}
+                <span class="column-tag">
+                    {{ col[1] or col[0].replace('custom_', '') }}
+                    <a href="/delete_column/{{ col[0] }}" style="color: #f44336; margin-left: 5px; text-decoration: none;"
+                       onclick="return confirm('Delete this column? All data in this column will be lost.')">×</a>
+                </span>
+                {% endfor %}
+                {% if not custom_columns %}
+                <span style="color: #666; font-style: italic;">No custom columns yet</span>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Bulk Actions and Table -->
+    <div class="container">
+        <div class="bulk-actions">
+            <h3>Bulk Actions</h3>
+            <form action="/bulk_update" method="POST" id="bulkForm" class="bulk-form">
+                <div id="bulkInputs"></div>
+                <input type="text" name="new_zone" placeholder="Move to Zone">
+                <button type="submit" class="btn" style="background-color: #856404;">
+                    Apply to Selected
+                </button>
+                <small style="color: #666; width: 100%; margin-top: 5px;">
+                    Select items from the table below first
+                </small>
+            </form>
+        </div>
+
+        <div class="table-container">
+            <table id="inventoryTable" class="display" style="width:100%">
+                <thead>
+                    <tr>
+                        <th width="40px">Sel</th>
+                        <th width="80px">Zone</th>
+                        <th>Item Name</th>
+                        <th width="90px">Power (A)</th>
+                        <th>ID</th>
+                        <th>Notes</th>
+                        <!-- Dynamic custom columns -->
+                        {% for col_name, display_name, col_type in custom_columns %}
+                        <th>{{ display_name or col_name.replace('custom_', '') }}</th>
+                        {% endfor %}
+                        <th class="actions-column">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in items %}
+                    <tr data-id="{{ item.id }}">
+                        <td><input type="checkbox" class="bulk-check" value="{{ item.id }}"></td>
+                        <td>
+                            <input type="text" name="zone" value="{{ item.zone }}"
+                                   class="row-input" data-field="zone" data-id="{{ item.id }}"
+                                   style="width: 100%; max-width: 70px;">
+                        </td>
+                        <td>
+                            <input type="text" name="item_name" value="{{ item.item_name }}"
+                                   class="row-input" data-field="item_name" data-id="{{ item.id }}"
+                                   style="width: 100%; min-width: 150px;">
+                        </td>
+                        <td>
+                            <input type="number" step="0.1" name="power_draw_amps"
+                                   value="{{ item.power_draw_amps }}"
+                                   class="row-input" data-field="power_draw_amps" data-id="{{ item.id }}"
+                                   style="width: 100%; max-width: 80px;">
+                        </td>
+                        <td>
+                            <input type="text" name="identifier" value="{{ item.identifier }}"
+                                   class="row-input" data-field="identifier" data-id="{{ item.id }}"
+                                   style="width: 100%; min-width: 150px;">
+                        </td>
+                        <td>
+                            <input type="text" name="notes" value="{{ item.notes }}"
+                                   class="row-input" data-field="notes" data-id="{{ item.id }}"
+                                   style="width: 100%; min-width: 180px;">
+                        </td>
+
+                        <!-- Dynamic custom column inputs -->
+                        {% for col_name, display_name, col_type in custom_columns %}
+                        <td>
+                            {% if col_type in ['INTEGER', 'REAL'] %}
+                            <input type="number" {% if col_type == 'REAL' %}step="0.01"{% endif %}
+                                   name="{{ col_name }}" value="{{ item[col_name] if item[col_name] else '' }}"
+                                   class="row-input" data-field="{{ col_name }}" data-id="{{ item.id }}"
+                                   style="width: 100%; min-width: 120px;">
+                            {% elif col_type == 'DATE' %}
+                            <input type="date" name="{{ col_name }}" value="{{ item[col_name] if item[col_name] else '' }}"
+                                   class="row-input" data-field="{{ col_name }}" data-id="{{ item.id }}"
+                                   style="width: 100%; min-width: 120px;">
+                            {% else %}
+                            <input type="text" name="{{ col_name }}" value="{{ item[col_name] if item[col_name] else '' }}"
+                                   class="row-input" data-field="{{ col_name }}" data-id="{{ item.id }}"
+                                   style="width: 100%; min-width: 120px;">
+                            {% endif %}
+                        </td>
+                        {% endfor %}
+
+                        <td class="actions-column">
+                            <div class="action-buttons">
+                                <button type="button" class="btn btn-save save-row-btn"
+                                        data-id="{{ item.id }}" style="padding: 8px 12px; font-size: 0.85em;">
+                                    Save
+                                </button>
+                                <a href="/duplicate/{{ item.id }}" class="btn"
+                                   style="color:#666; font-size:0.8em; background: none; padding: 8px 12px;">
+                                    Copy
+                                </a>
+                                <a href="/delete/{{ item.id }}" class="btn-delete"
+                                   onclick="return confirm('Delete this item?')">
+                                    Del
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+<script src="https://code.jquery.com/jquery-3.7.0.js"></script>
+<script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/responsive/2.5.0/js/dataTables.responsive.min.js"></script>
+<script>
+    $(document).ready(function() {
+        // Initialize DataTables with responsive plugin
+        var table = $('#inventoryTable').DataTable({
+            "pageLength": 5,
+            "lengthMenu": [[5, 10, 25, -1], [5, 10, 25, "All"]],
+            "order": [[1, "asc"]],
+            "stateSave": true,
+            "responsive": {
+                details: {
+                    display: $.fn.dataTable.Responsive.display.childRowImmediate,
+                    type: ''
+                }
+            },
+            "columnDefs": [
+                {
+                    "targets": 0, // Select checkbox column
+                    "orderable": false,
+                    "searchable": false,
+                    "responsivePriority": 1
+                },
+                {
+                    "targets": '_all', // All columns except checkbox
+                    "render": function(data, type, row, meta) {
+                        if (meta.col === 0) return data; // Skip checkbox column
+
+                        if (type === 'filter' || type === 'sort') {
+                            var temp = document.createElement('div');
+                            temp.innerHTML = data;
+                            var input = temp.querySelector('input');
+                            return input ? input.value : data;
+                        }
+                        return data;
+                    }
+                }
+            ]
+        });
+
+        // Track modified rows
+        var modifiedRows = new Set();
+
+        // When any input changes, mark the row as modified
+        $(document).on('input', '.row-input', function() {
+            var itemId = $(this).data('id');
+            modifiedRows.add(itemId);
+
+            // Highlight the save button for this row
+            $('.save-row-btn[data-id="' + itemId + '"]')
+                .css('background-color', '#ffc107')
+                .css('color', '#212529');
+
+            // Highlight the row
+            $('tr[data-id="' + itemId + '"]').css('background-color', '#fff9e6');
+        });
+
+        // Individual row save button handler - FIXED WITH e.preventDefault()
+        $(document).on('click', '.save-row-btn', function(e) {
+            e.preventDefault();
+            var itemId = $(this).data('id');
+            saveRow(itemId, $(this));
+        });
+
+        // Save All button handler - FIXED WITH e.preventDefault()
+        $('#saveAllBtn').on('click', function(e) {
+            e.preventDefault();
+
+            if (modifiedRows.size === 0) {
+                alert('No changes to save.');
+                return;
+            }
+
+            var $btn = $(this);
+            var originalText = $btn.html();
+            $btn.html('Saving All...').prop('disabled', true);
+
+            // Save each modified row
+            var promises = [];
+            modifiedRows.forEach(function(itemId) {
+                promises.push(saveRowPromise(itemId));
+            });
+
+            // Wait for all saves to complete
+            Promise.all(promises).then(function() {
+                // Clear modified rows
+                modifiedRows.clear();
+
+                // Reset all save buttons to original style
+                $('.save-row-btn').css('background-color', '').css('color', '');
+
+                // Reset row backgrounds
+                $('tr[data-id]').css('background-color', '');
+
+                // Reset Save All button
+                $btn.html(originalText).prop('disabled', false);
+
+                // Redirect to show the undo toast
+                window.location.href = '/?saved=all';
+            }).catch(function(error) {
+                alert('Error saving some changes: ' + error);
+                $btn.html(originalText).prop('disabled', false);
+            });
+        });
+
+        // Function to save a single row - FIXED VERSION
+        function saveRow(itemId, $btn) {
+            var $row = $('tr[data-id="' + itemId + '"]');
+            var formData = new FormData();
+
+            // Add the item ID
+            formData.append('id', itemId);
+
+            console.log('Saving row with ID:', itemId);
+
+            // Get ALL inputs from the row, regardless of responsive state
+            // This approach works for both collapsed and expanded rows
+
+            // 1. First, check the main row for inputs
+            $row.find('.row-input').each(function() {
+                var fieldName = $(this).data('field');
+                var fieldValue = $(this).val();
+                if (fieldName) {
+                    formData.append(fieldName, fieldValue);
+                    console.log('Main row - Field:', fieldName, 'Value:', fieldValue);
+                }
+            });
+
+            // 2. Check if there's a responsive child row
+            var $childRow = $row.next('tr.child');
+            if ($childRow.length) {
+                console.log('Found child row for item ID:', itemId);
+
+                // Get inputs from the child row's detail table
+                $childRow.find('.dtr-details table td input.row-input').each(function() {
+                    var fieldName = $(this).data('field');
+                    var fieldValue = $(this).val();
+                    if (fieldName) {
+                        formData.append(fieldName, fieldValue);
+                        console.log('Child row - Field:', fieldName, 'Value:', fieldValue);
+                    }
+                });
+            }
+
+            // 3. Also check if DataTables has rendered the inputs differently
+            // Get the row data from DataTables
+            var rowData = table.row($row).data();
+            if (rowData) {
+                // Loop through cells (skip first checkbox and last actions column)
+                for (var i = 1; i < rowData.length - 1; i++) {
+                    var cellContent = rowData[i];
+                    if (cellContent && typeof cellContent === 'string') {
+                        var tempDiv = document.createElement('div');
+                        tempDiv.innerHTML = cellContent;
+                        var input = tempDiv.querySelector('input.row-input');
+
+                        if (input) {
+                            var fieldName = $(input).data('field');
+                            var fieldValue = input.value;
+
+                            // Only add if not already added
+                            if (fieldName && !formData.has(fieldName)) {
+                                formData.append(fieldName, fieldValue);
+                                console.log('DataTables data - Field:', fieldName, 'Value:', fieldValue);
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Show saving state
+            var originalText = $btn.text();
+            $btn.text('Saving...').prop('disabled', true);
+
+            // Send AJAX request
+            $.ajax({
+                url: '/update',
+                method: 'POST',
+                data: formData,
+                processData: false,
+                contentType: false,
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                success: function(response) {
+                    // Remove from modified rows
+                    modifiedRows.delete(itemId);
+
+                    // Reset button to original state
+                    $btn.text(originalText).prop('disabled', false)
+                        .css('background-color', '').css('color', '');
+
+                    // Reset row background
+                    $row.css('background-color', '');
+
+                    // Refresh the table data
+                    table.row($row).invalidate().draw(false);
+
+                    // Redirect to show undo toast
+                    window.location.href = '/?saved=' + itemId;
+                },
+                error: function(xhr, status, error) {
+                    console.error('Save error:', error);
+                    alert('Error saving changes. Please try again.');
+                    $btn.text(originalText).prop('disabled', false);
+                }
+            });
+        }
+
+        // Function to save a row and return a promise
+        function saveRowPromise(itemId) {
+            return new Promise(function(resolve, reject) {
+                var $row = $('tr[data-id="' + itemId + '"]');
+                var formData = new FormData();
+
+                formData.append('id', itemId);
+
+                // Get ALL inputs using the same logic as saveRow
+                $row.find('.row-input').each(function() {
+                    var fieldName = $(this).data('field');
+                    var fieldValue = $(this).val();
+                    if (fieldName) {
+                        formData.append(fieldName, fieldValue);
+                    }
+                });
+
+                // Check child row
+                var $childRow = $row.next('tr.child');
+                if ($childRow.length) {
+                    $childRow.find('.dtr-details table td input.row-input').each(function() {
+                        var fieldName = $(this).data('field');
+                        var fieldValue = $(this).val();
+                        if (fieldName) {
+                            formData.append(fieldName, fieldValue);
+                        }
+                    });
+                }
+
+                // Also check DataTables data
+                var rowData = table.row($row).data();
+                if (rowData) {
+                    for (var i = 1; i < rowData.length - 1; i++) {
+                        var cellContent = rowData[i];
+                        if (cellContent && typeof cellContent === 'string') {
+                            var tempDiv = document.createElement('div');
+                            tempDiv.innerHTML = cellContent;
+                            var input = tempDiv.querySelector('input.row-input');
+
+                            if (input) {
+                                var fieldName = $(input).data('field');
+                                var fieldValue = input.value;
+
+                                if (fieldName && !formData.has(fieldName)) {
+                                    formData.append(fieldName, fieldValue);
+                                }
+                            }
+                        }
+                    }
+                }
+
+                $.ajax({
+                    url: '/update',
+                    method: 'POST',
+                    data: formData,
+                    processData: false,
+                    contentType: false,
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest'
+                    },
+                    success: function(response) {
+                        table.row($row).invalidate();
+                        resolve(response);
+                    },
+                    error: function(xhr, status, error) {
+                        reject(error);
+                    }
+                });
+            });
+        }
+
+        // Enhanced helper function to map labels to field names
+        function getFieldNameFromLabel(label) {
+            var mapping = {
+                'Zone': 'zone',
+                'Item Name': 'item_name',
+                'Power (A)': 'power_draw_amps',
+                'ID': 'identifier',
+                'Notes': 'notes'
+            };
+
+            // Direct mapping first
+            if (label in mapping) {
+                return mapping[label];
+            }
+
+            // Check for custom columns by looking at all table headers
+            var foundField = null;
+            $('#inventoryTable thead th').each(function() {
+                var headerText = $(this).text().trim();
+                if (headerText === label) {
+                    // Try to find the corresponding input in the first row
+                    var colIndex = $(this).index();
+                    var $firstRowInput = $('#inventoryTable tbody tr:first td').eq(colIndex).find('.row-input');
+                    if ($firstRowInput.length) {
+                        foundField = $firstRowInput.data('field');
+                        return false; // Break the loop
+                    }
+                }
+            });
+
+            return foundField || label.toLowerCase().replace(/\s+/g, '_');
+        }
+
+        // Add event listener for responsive display events
+        table.on('responsive-display', function (e, datatable, row, showHide, update) {
+            console.log('Row display changed:', showHide, 'for row with ID:', $(row.node()).data('id'));
+
+            // When a row is expanded/collapsed, re-scan for inputs
+            var itemId = $(row.node()).data('id');
+            if (itemId) {
+                // If the row was just expanded, we might need to re-bind events
+                if (showHide) {
+                    // Row was expanded - inputs are now visible
+                    setTimeout(function() {
+                        var $expandedRow = $(row.node()).next('tr.child');
+                        $expandedRow.find('.row-input').off('input').on('input', function() {
+                            modifiedRows.add(itemId);
+                            $('.save-row-btn[data-id="' + itemId + '"]')
+                                .css('background-color', '#ffc107')
+                                .css('color', '#212529');
+                            $('tr[data-id="' + itemId + '"]').css('background-color', '#fff9e6');
+                        });
+                    }, 100);
+                }
+            }
+        });
+
+        // Create and populate the Zone Filter Dropdown
+        $('<div style="display:inline-block; margin-left:15px;"><label>Zone: </label><select id="zFilt"><option value="">All</option></select></div>').insertAfter('.dataTables_length');
+
+        function buildFilter() {
+            var zones = [];
+            table.column(1).data().each(function(d) {
+                var temp = document.createElement('div');
+                temp.innerHTML = d;
+                var input = temp.querySelector('input');
+                var val = input ? input.value : '';
+                if (val && zones.indexOf(val) === -1) zones.push(val);
+            });
+            zones.sort().forEach(function(z) {
+                $('#zFilt').append('<option value="'+z+'">'+z+'</option>');
+            });
+        }
+
+        buildFilter();
+
+        $('#zFilt').on('change', function() {
+            table.column(1).search(this.value).draw();
+        });
+
+        // Undo Toast removal logic
+        setTimeout(function() {
+            $('#undoToast').css('opacity', '0');
+            setTimeout(function() { $('#undoToast').remove(); }, 500);
+        }, 5000);
+
+        // Bulk update logic
+        $('#bulkForm').on('submit', function() {
+            $('#bulkInputs').empty();
+            $('.bulk-check:checked').each(function() {
+                $('#bulkInputs').append('<input type="hidden" name="item_ids" value="'+$(this).val()+'">');
+            });
+            return $('.bulk-check:checked').length > 0;
+        });
+
+        // Adjust table on window resize
+        $(window).on('resize', function() {
+            table.columns.adjust().responsive.recalc();
+        });
+
+        // Focus on new column name field when adding column
+        $('input[name="column_name"]').focus();
+
+        // Toggle custom columns section in add form
+        // Add toggle button for custom columns
+        if ($('#addItemForm .custom-columns-section').length) {
+            $('#addItemForm').prepend(
+                '<button type="button" id="toggleCustomColumns" class="btn" style="background-color: #6c757d; margin-bottom: 10px; font-size: 0.85em;">' +
+                'Show Additional Fields' +
+                '</button>'
+            );
+
+            // Initially hide custom columns
+            $('#addItemForm .custom-columns-section').hide();
+
+            // Toggle visibility
+            $('#toggleCustomColumns').on('click', function() {
+                var $section = $('#addItemForm .custom-columns-section');
+                var isVisible = $section.is(':visible');
+
+                if (isVisible) {
+                    $section.slideUp();
+                    $(this).html('Show Additional Fields');
+                } else {
+                    $section.slideDown();
+                    $(this).html('Hide Additional Fields');
+                }
+            });
+        }
+
+        // Auto-focus on Zone field when page loads
+        $('input[name="zone"]').focus();
+
+        // Debug logging
+        console.log('Inventory manager initialized. Responsive mode:', table.responsive ? 'enabled' : 'disabled');
+
+        // Prevent row collapse if there are unsaved changes (optional)
+        table.on('responsive-pre-collapse', function(e, datatable, row) {
+            var itemId = $(row.node()).data('id');
+            if (modifiedRows.has(itemId)) {
+                e.preventDefault();
+                alert('Please save changes before collapsing this row.');
+                return false;
+            }
+        });
+    });
+</script>
+</body>
+</html>

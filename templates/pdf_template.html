@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        body { font-family: sans-serif; }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+        th { background-color: #f2f2f2; }
+        h1 { color: #007bff; }
+    </style>
+</head>
+<body>
+    <h1>Lab Inventory Audit Report - Jan 2026</h1>
+    <p>Generated for Zone 4 & Zone 7</p>
+    <table>
+        <thead>
+            <tr>
+                <th>Zone</th>
+                <th>Item Name</th>
+                <th>Identifier</th>
+                <th>Power (A)</th>
+                <th>Notes</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in items %}
+            <tr>
+                <td>{{ item.zone }}</td>
+                <td>{{ item.item_name }}</td>
+                <td>{{ item.identifier }}</td>
+                <td>{{ item.power_draw_amps }}A</td>
+                <td>{{ item.notes }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</body>
+</html>
