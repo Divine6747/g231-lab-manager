@@ -24,7 +24,7 @@ A Flask-based inventory management system for lab equipment tracking.
 
 1. Clone the repository:
    ```bash
-   git clone https://github.com/yourusername/g231-lab-manager.git
+   git clone https://github.com/Divine6747/g231-lab-manager.git
    cd g231-lab-manager
 
 2. pip install -r requirements.txt
