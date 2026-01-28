@@ -384,15 +384,6 @@
                 <a href="/download_csv" class="btn" style="background-color: #28a745;">
                     <i class="fa-solid fa-file-csv"></i> Export CSV
                 </a>
-                {% if not is_windows %}
-                <a href="/download_pdf" class="btn" style="background-color: #17a2b8;">
-                    <i class="fa-solid fa-file-pdf"></i> Report PDF
-                </a>
-                {% else %}
-                <span style="color: #d9534f; font-weight: bold; font-size: 0.9em; display: flex; align-items: center; padding: 10px;">
-                    <i class="fa-solid fa-server"></i> PDF Disabled (Server Only)
-                </span>
-                {% endif %}
                 <!-- SAVE ALL BUTTON -->
                 <button type="button" class="btn" id="saveAllBtn" style="background-color: #6610f2;">
                     <i class="fa-solid fa-save"></i> Save All Changes
@@ -403,7 +394,7 @@
 
     <!-- Add New Lab Asset Form (WITH CUSTOM COLUMNS) -->
     <div class="container">
-        <div class="form-section" style="background-color: #f8f9fa;">
+        <div class="form-section" style="background-color: #cdfdeb;">
             <h3>Add New Lab Asset</h3>
             
             <form action="/add_item" method="POST" id="addItemForm">
@@ -980,7 +971,7 @@
             table.columns.adjust().responsive.recalc();
         });
 
-        // Focus on new column name field when adding column
+        // Focus on the new column name field when adding a column
         $('input[name="column_name"]').focus();
 
         // Prevent row collapse if there are unsaved changes (optional)
