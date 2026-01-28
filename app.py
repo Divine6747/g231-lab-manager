@@ -1,5 +1,6 @@
 from flask import Flask, render_template, request, Response, redirect, url_for, send_file, session, jsonify
 import sqlite3, os, functools, platform, io, csv, json
+import logging
 
 app = Flask(__name__)
 
@@ -8,6 +9,9 @@ app.secret_key = 'lab_secret_key_2026'
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DB_NAME = os.path.join(BASE_DIR, 'lab_assets.db')
+
+# Enable logging for debugging
+logging.basicConfig(level=logging.DEBUG)
 
 # --- DATABASE HELPER ---
 def get_db():
@@ -90,22 +94,33 @@ def add_custom_column(column_name, column_type='TEXT', display_name=None):
     if not display_name:
         display_name = column_name
     
-    # Check if column already exists
+    # Check if column already exists in custom_columns table
     cursor.execute('SELECT * FROM custom_columns WHERE column_name = ?', (clean_name,))
     if cursor.fetchone() is None:
-        # Add to custom_columns table
-        cursor.execute('INSERT INTO custom_columns (column_name, column_type, display_name) VALUES (?, ?, ?)', 
-                      (clean_name, column_type, display_name))
-        
-        # Add column to inventory table
         try:
-            cursor.execute(f'ALTER TABLE inventory ADD COLUMN {clean_name} {col_type}')
-            # Initialize with empty values for existing rows
-            cursor.execute(f'UPDATE inventory SET {clean_name} = ?', ('',))
-        except sqlite3.OperationalError:
-            pass  # Column might already exist
+            # Add to custom_columns table
+            cursor.execute('INSERT INTO custom_columns (column_name, column_type, display_name) VALUES (?, ?, ?)', 
+                          (clean_name, column_type, display_name))
+            
+            # Add column to inventory table
+            try:
+                cursor.execute(f'ALTER TABLE inventory ADD COLUMN {clean_name} {column_type}')
+                # Initialize with empty values for existing rows
+                cursor.execute(f'UPDATE inventory SET {clean_name} = ?', ('',))
+                app.logger.info(f"Successfully added column {clean_name} with type {column_type}")
+            except sqlite3.OperationalError as e:
+                app.logger.warning(f"Column {clean_name} might already exist: {e}")
+                # Column might already exist in table but not in custom_columns
+            
+            conn.commit()
+            
+        except Exception as e:
+            conn.rollback()
+            app.logger.error(f"Error adding custom column: {e}")
+            raise
+    else:
+        app.logger.info(f"Column {clean_name} already exists in custom_columns table")
     
-    conn.commit()
     conn.close()
     return clean_name, display_name
 
@@ -245,8 +260,15 @@ def add_column():
     column_type = request.form.get('column_type', 'TEXT')
     display_name = request.form.get('display_name', column_name)
     
+    app.logger.info(f"Adding column: name={column_name}, type={column_type}, display={display_name}")
+    
     if column_name:
-        add_custom_column(column_name, column_type, display_name)
+        try:
+            clean_name, display_name = add_custom_column(column_name, column_type, display_name)
+            app.logger.info(f"Successfully added column: {clean_name} (display: {display_name})")
+        except Exception as e:
+            app.logger.error(f"Error in add_column route: {e}")
+            return f"Error adding column: {str(e)}", 500
     
     return redirect(url_for('index'))
 
@@ -389,6 +411,31 @@ def delete_item(id):
     conn.close()
     return redirect(url_for('index'))
 
+# --- DEBUG ROUTES ---
+@app.route('/debug/columns')
+@requires_auth
+def debug_columns():
+    """Debug route to see current database schema"""
+    conn = get_db()
+    cursor = conn.cursor()
+    
+    # Get inventory table schema
+    cursor.execute("PRAGMA table_info(inventory)")
+    inventory_columns = cursor.fetchall()
+    
+    # Get custom columns
+    cursor.execute('SELECT * FROM custom_columns')
+    custom_columns = cursor.fetchall()
+    
+    conn.close()
+    
+    return jsonify({
+        'inventory_columns': [dict(zip(['cid', 'name', 'type', 'notnull', 'dflt_value', 'pk'], col)) 
+                              for col in inventory_columns],
+        'custom_columns': [dict(zip(['id', 'column_name', 'column_type', 'display_name', 'created_at'], col)) 
+                           for col in custom_columns]
+    })
+
 # --- EXPORTS ---
 @app.route('/download_backup')
 @requires_auth
@@ -437,5 +484,9 @@ def download_csv():
                    headers={"Content-disposition": "attachment; filename=lab_audit.csv"})
 
 if __name__ == '__main__':
-    initialize_app()
-    app.run(debug=True)
+    try:
+        initialize_app()
+        app.run(debug=True, use_reloader=True)
+    except Exception as e:
+        app.logger.error(f"Failed to start app: {e}")
+        raise
