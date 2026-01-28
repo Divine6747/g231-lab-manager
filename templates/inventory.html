@@ -119,12 +119,77 @@
             border: 1px solid #bbdefb;
         }
 
-        .column-input {
+        /* Form Styles */
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 500;
+            color: #495057;
+        }
+
+        .form-input {
             width: 100%;
-            padding: 8px;
+            padding: 8px 12px;
             border: 1px solid #ced4da;
             border-radius: 4px;
-            margin-bottom: 5px;
+            font-size: 0.9em;
+        }
+
+        .form-input:focus {
+            border-color: #80bdff;
+            outline: 0;
+            box-shadow: 0 0 0 0.2rem rgba(0,123,255,.25);
+        }
+
+        .form-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+
+        .form-col {
+            flex: 1;
+            min-width: 150px;
+        }
+
+        /* Column Form Styles */
+        .column-form {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .column-form input,
+        .column-form select {
+            padding: 8px 12px;
+            border: 1px solid #ced4da;
+            border-radius: 4px;
+            flex: 1;
+            min-width: 150px;
+        }
+
+        /* Custom Columns Section */
+        .custom-columns-section {
+            margin-bottom: 15px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 4px;
+            border: 1px solid #dee2e6;
+        }
+
+        .custom-columns-section h4 {
+            margin-top: 0;
+            margin-bottom: 15px;
+            font-size: 1em;
+            color: #495057;
+            font-weight: 600;
         }
 
         /* Mobile-Specific Styles */
@@ -161,14 +226,30 @@
                 font-size: 1.2em;
             }
 
-            .add-form input,
-            .add-form button {
+            .form-row {
+                flex-direction: column;
+                gap: 10px;
+            }
+
+            .form-col {
                 width: 100%;
             }
 
             .column-tag {
                 font-size: 0.9em;
                 padding: 4px 8px;
+            }
+
+            .column-form {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .column-form input,
+            .column-form select,
+            .column-form button {
+                width: 100%;
+                margin-bottom: 8px;
             }
         }
 
@@ -263,22 +344,20 @@
             }
         }
 
-        /* Custom Column Form */
-        .column-form {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 10px;
-            align-items: center;
+        /* Toggle Button */
+        .toggle-btn {
+            background-color: #6c757d;
+            color: white;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.85em;
             margin-bottom: 15px;
         }
 
-        .column-form input,
-        .column-form select {
-            padding: 8px 12px;
-            border: 1px solid #ced4da;
-            border-radius: 4px;
-            flex: 1;
-            min-width: 150px;
+        .toggle-btn:hover {
+            background-color: #5a6268;
         }
     </style>
 </head>
@@ -324,25 +403,46 @@
 
     <!-- Add New Lab Asset Form (WITH CUSTOM COLUMNS) -->
     <div class="container">
-        <div class="form-section">
+        <div class="form-section" style="background-color: #f8f9fa;">
             <h3>Add New Lab Asset</h3>
+            
             <form action="/add_item" method="POST" id="addItemForm">
                 <!-- Core Fields -->
-                <div style="display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 15px;">
-                    <input type="text" name="zone" placeholder="Zone" style="width:60px;" required>
-                    <input type="text" name="name" placeholder="Item Name" style="flex: 1;" required>
-                    <input type="text" name="id_val" placeholder="Serial/MAC ID" style="flex: 1;">
-                    <input type="text" name="notes" placeholder="Notes" style="flex: 1;">
-                    <input type="number" step="0.1" name="power" placeholder="Amps" style="width:70px;">
+                <div class="form-row">
+                    <div class="form-col">
+                        <label class="form-label">Zone</label>
+                        <input type="text" name="zone" class="form-input" placeholder="Zone" required>
+                    </div>
+                    <div class="form-col">
+                        <label class="form-label">Item Name</label>
+                        <input type="text" name="name" class="form-input" placeholder="Item Name" required>
+                    </div>
+                    <div class="form-col">
+                        <label class="form-label">Serial/MAC ID</label>
+                        <input type="text" name="id_val" class="form-input" placeholder="Serial/MAC ID">
+                    </div>
+                    <div class="form-col">
+                        <label class="form-label">Power (Amps)</label>
+                        <input type="number" step="0.1" name="power" class="form-input" placeholder="Amps">
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Notes</label>
+                    <textarea name="notes" class="form-input" placeholder="Notes" rows="2" style="resize: vertical;"></textarea>
                 </div>
 
                 <!-- Custom Columns Section -->
                 {% if custom_columns %}
-                <div class="custom-columns-section" style="margin-bottom: 15px; padding: 10px; background: #f8f9fa; border-radius: 4px;">
-                    <h4 style="margin-top: 0; margin-bottom: 10px; font-size: 1em; color: #495057;">Additional Information</h4>
-                    <div style="display: flex; flex-wrap: wrap; gap: 8px;">
+                <button type="button" id="toggleCustomColumns" class="toggle-btn">
+                    <i class="fa-solid fa-plus"></i> Show Additional Fields
+                </button>
+                
+                <div class="custom-columns-section" style="display: none;">
+                    <h4>Additional Information</h4>
+                    <div class="form-row">
                         {% for col_name, display_name, col_type in custom_columns %}
-                        <div style="flex: 1; min-width: 150px;">
+                        <div class="form-col">
                             <label class="form-label">
                                 {{ display_name or col_name.replace('custom_', '') }}
                             </label>
@@ -350,17 +450,17 @@
                             <input type="number"
                                    {% if col_type == 'REAL' %}step="0.01"{% endif %}
                                    name="{{ col_name }}"
-                                   placeholder="{{ display_name or col_name.replace('custom_', '') }}"
-                                   style="width: 100%; padding: 8px; border: 1px solid #ced4da; border-radius: 4px;">
+                                   class="form-input"
+                                   placeholder="{{ display_name or col_name.replace('custom_', '') }}">
                             {% elif col_type == 'DATE' %}
                             <input type="date"
                                    name="{{ col_name }}"
-                                   style="width: 100%; padding: 8px; border: 1px solid #ced4da; border-radius: 4px;">
+                                   class="form-input">
                             {% else %}
                             <input type="text"
                                    name="{{ col_name }}"
-                                   placeholder="{{ display_name or col_name.replace('custom_', '') }}"
-                                   style="width: 100%; padding: 8px; border: 1px solid #ced4da; border-radius: 4px;">
+                                   class="form-input"
+                                   placeholder="{{ display_name or col_name.replace('custom_', '') }}">
                             {% endif %}
                         </div>
                         {% endfor %}
@@ -368,9 +468,9 @@
                 </div>
                 {% endif %}
 
-                <div style="text-align: center;">
+                <div style="text-align: center; margin-top: 20px;">
                     <button type="submit" class="btn btn-add" style="width: 100%; max-width: 300px; margin: 0 auto; display: block;">
-                        Add to Inventory
+                        <i class="fa-solid fa-plus"></i> Add to Inventory
                     </button>
                 </div>
             </form>
@@ -381,31 +481,36 @@
     <div class="container form-section" style="background-color: #e3f2fd;">
         <h3>Manage Custom Columns</h3>
         <form action="/add_column" method="POST" class="column-form">
-            <input type="text" name="column_name" placeholder="Column Name (e.g., Warranty Expiry)" required>
-            <input type="text" name="display_name" placeholder="Display Name (optional)">
-            <select name="column_type">
+            <input type="text" name="column_name" class="form-input" placeholder="Column Name (e.g., Warranty Expiry)" required>
+            <input type="text" name="display_name" class="form-input" placeholder="Display Name (optional)">
+            <select name="column_type" class="form-input">
                 <option value="TEXT">Text</option>
                 <option value="INTEGER">Number</option>
                 <option value="REAL">Decimal</option>
                 <option value="DATE">Date</option>
             </select>
             <button type="submit" class="btn" style="background-color: #2196f3;">
-                Add Column
+                <i class="fa-solid fa-plus"></i> Add Column
             </button>
         </form>
 
         <div style="margin-top: 10px;">
-            <small style="color: #666;">Existing custom columns:</small>
-            <div id="customColumnsList">
+            <small style="color: #666; font-weight: 500;">Existing custom columns:</small>
+            <div id="customColumnsList" style="margin-top: 10px;">
                 {% for col in custom_columns %}
                 <span class="column-tag">
+                    <i class="fa-solid fa-columns" style="margin-right: 5px;"></i>
                     {{ col[1] or col[0].replace('custom_', '') }}
-                    <a href="/delete_column/{{ col[0] }}" style="color: #f44336; margin-left: 5px; text-decoration: none;"
-                       onclick="return confirm('Delete this column? All data in this column will be lost.')">×</a>
+                    <a href="/delete_column/{{ col[0] }}" style="color: #f44336; margin-left: 8px; text-decoration: none; font-weight: bold;"
+                       onclick="return confirm('Delete this column? All data in this column will be lost.')">
+                       <i class="fa-solid fa-times"></i>
+                    </a>
                 </span>
                 {% endfor %}
                 {% if not custom_columns %}
-                <span style="color: #666; font-style: italic;">No custom columns yet</span>
+                <span style="color: #666; font-style: italic; display: block; padding: 10px; background: #f8f9fa; border-radius: 4px;">
+                    <i class="fa-solid fa-info-circle"></i> No custom columns yet. Add one above.
+                </span>
                 {% endif %}
             </div>
         </div>
@@ -417,12 +522,12 @@
             <h3>Bulk Actions</h3>
             <form action="/bulk_update" method="POST" id="bulkForm" class="bulk-form">
                 <div id="bulkInputs"></div>
-                <input type="text" name="new_zone" placeholder="Move to Zone">
+                <input type="text" name="new_zone" class="form-input" placeholder="Move to Zone">
                 <button type="submit" class="btn" style="background-color: #856404;">
-                    Apply to Selected
+                    <i class="fa-solid fa-arrows-alt-h"></i> Apply to Selected
                 </button>
                 <small style="color: #666; width: 100%; margin-top: 5px;">
-                    Select items from the table below first
+                    <i class="fa-solid fa-info-circle"></i> Select items from the table below first
                 </small>
             </form>
         </div>
@@ -450,28 +555,28 @@
                         <td><input type="checkbox" class="bulk-check" value="{{ item.id }}"></td>
                         <td>
                             <input type="text" name="zone" value="{{ item.zone }}"
-                                   class="row-input" data-field="zone" data-id="{{ item.id }}"
+                                   class="row-input form-input" data-field="zone" data-id="{{ item.id }}"
                                    style="width: 100%; max-width: 70px;">
                         </td>
                         <td>
                             <input type="text" name="item_name" value="{{ item.item_name }}"
-                                   class="row-input" data-field="item_name" data-id="{{ item.id }}"
+                                   class="row-input form-input" data-field="item_name" data-id="{{ item.id }}"
                                    style="width: 100%; min-width: 150px;">
                         </td>
                         <td>
                             <input type="number" step="0.1" name="power_draw_amps"
                                    value="{{ item.power_draw_amps }}"
-                                   class="row-input" data-field="power_draw_amps" data-id="{{ item.id }}"
+                                   class="row-input form-input" data-field="power_draw_amps" data-id="{{ item.id }}"
                                    style="width: 100%; max-width: 80px;">
                         </td>
                         <td>
                             <input type="text" name="identifier" value="{{ item.identifier }}"
-                                   class="row-input" data-field="identifier" data-id="{{ item.id }}"
+                                   class="row-input form-input" data-field="identifier" data-id="{{ item.id }}"
                                    style="width: 100%; min-width: 150px;">
                         </td>
                         <td>
                             <input type="text" name="notes" value="{{ item.notes }}"
-                                   class="row-input" data-field="notes" data-id="{{ item.id }}"
+                                   class="row-input form-input" data-field="notes" data-id="{{ item.id }}"
                                    style="width: 100%; min-width: 180px;">
                         </td>
 
@@ -481,15 +586,15 @@
                             {% if col_type in ['INTEGER', 'REAL'] %}
                             <input type="number" {% if col_type == 'REAL' %}step="0.01"{% endif %}
                                    name="{{ col_name }}" value="{{ item[col_name] if item[col_name] else '' }}"
-                                   class="row-input" data-field="{{ col_name }}" data-id="{{ item.id }}"
+                                   class="row-input form-input" data-field="{{ col_name }}" data-id="{{ item.id }}"
                                    style="width: 100%; min-width: 120px;">
                             {% elif col_type == 'DATE' %}
                             <input type="date" name="{{ col_name }}" value="{{ item[col_name] if item[col_name] else '' }}"
-                                   class="row-input" data-field="{{ col_name }}" data-id="{{ item.id }}"
+                                   class="row-input form-input" data-field="{{ col_name }}" data-id="{{ item.id }}"
                                    style="width: 100%; min-width: 120px;">
                             {% else %}
                             <input type="text" name="{{ col_name }}" value="{{ item[col_name] if item[col_name] else '' }}"
-                                   class="row-input" data-field="{{ col_name }}" data-id="{{ item.id }}"
+                                   class="row-input form-input" data-field="{{ col_name }}" data-id="{{ item.id }}"
                                    style="width: 100%; min-width: 120px;">
                             {% endif %}
                         </td>
@@ -499,15 +604,15 @@
                             <div class="action-buttons">
                                 <button type="button" class="btn btn-save save-row-btn"
                                         data-id="{{ item.id }}" style="padding: 8px 12px; font-size: 0.85em;">
-                                    Save
+                                    <i class="fa-solid fa-save"></i> Save
                                 </button>
                                 <a href="/duplicate/{{ item.id }}" class="btn"
                                    style="color:#666; font-size:0.8em; background: none; padding: 8px 12px;">
-                                    Copy
+                                    <i class="fa-solid fa-copy"></i> Copy
                                 </a>
                                 <a href="/delete/{{ item.id }}" class="btn-delete"
                                    onclick="return confirm('Delete this item?')">
-                                    Del
+                                    <i class="fa-solid fa-trash"></i> Del
                                 </a>
                             </div>
                         </td>
@@ -559,6 +664,23 @@
             ]
         });
 
+        // Toggle custom columns in add form
+        $('#toggleCustomColumns').on('click', function() {
+            var $section = $('.custom-columns-section');
+            var isVisible = $section.is(':visible');
+
+            if (isVisible) {
+                $section.slideUp();
+                $(this).html('<i class="fa-solid fa-plus"></i> Show Additional Fields');
+            } else {
+                $section.slideDown();
+                $(this).html('<i class="fa-solid fa-minus"></i> Hide Additional Fields');
+            }
+        });
+
+        // Auto-focus on Zone field when page loads
+        $('input[name="zone"]').focus();
+
         // Track modified rows
         var modifiedRows = new Set();
 
@@ -576,14 +698,14 @@
             $('tr[data-id="' + itemId + '"]').css('background-color', '#fff9e6');
         });
 
-        // Individual row save button handler - FIXED WITH e.preventDefault()
+        // Individual row save button handler
         $(document).on('click', '.save-row-btn', function(e) {
             e.preventDefault();
             var itemId = $(this).data('id');
             saveRow(itemId, $(this));
         });
 
-        // Save All button handler - FIXED WITH e.preventDefault()
+        // Save All button handler
         $('#saveAllBtn').on('click', function(e) {
             e.preventDefault();
 
@@ -594,7 +716,7 @@
 
             var $btn = $(this);
             var originalText = $btn.html();
-            $btn.html('Saving All...').prop('disabled', true);
+            $btn.html('<i class="fa-solid fa-spinner fa-spin"></i> Saving All...').prop('disabled', true);
 
             // Save each modified row
             var promises = [];
@@ -624,7 +746,7 @@
             });
         });
 
-        // Function to save a single row - FIXED VERSION
+        // Function to save a single row
         function saveRow(itemId, $btn) {
             var $row = $('tr[data-id="' + itemId + '"]');
             var formData = new FormData();
@@ -634,10 +756,7 @@
 
             console.log('Saving row with ID:', itemId);
 
-            // Get ALL inputs from the row, regardless of responsive state
-            // This approach works for both collapsed and expanded rows
-
-            // 1. First, check the main row for inputs
+            // Get ALL inputs from the row
             $row.find('.row-input').each(function() {
                 var fieldName = $(this).data('field');
                 var fieldValue = $(this).val();
@@ -647,7 +766,7 @@
                 }
             });
 
-            // 2. Check if there's a responsive child row
+            // Check if there's a responsive child row
             var $childRow = $row.next('tr.child');
             if ($childRow.length) {
                 console.log('Found child row for item ID:', itemId);
@@ -663,11 +782,9 @@
                 });
             }
 
-            // 3. Also check if DataTables has rendered the inputs differently
-            // Get the row data from DataTables
+            // Also check if DataTables has rendered the inputs differently
             var rowData = table.row($row).data();
             if (rowData) {
-                // Loop through cells (skip first checkbox and last actions column)
                 for (var i = 1; i < rowData.length - 1; i++) {
                     var cellContent = rowData[i];
                     if (cellContent && typeof cellContent === 'string') {
@@ -679,7 +796,6 @@
                             var fieldName = $(input).data('field');
                             var fieldValue = input.value;
 
-                            // Only add if not already added
                             if (fieldName && !formData.has(fieldName)) {
                                 formData.append(fieldName, fieldValue);
                                 console.log('DataTables data - Field:', fieldName, 'Value:', fieldValue);
@@ -690,8 +806,8 @@
             }
 
             // Show saving state
-            var originalText = $btn.text();
-            $btn.text('Saving...').prop('disabled', true);
+            var originalText = $btn.html();
+            $btn.html('<i class="fa-solid fa-spinner fa-spin"></i> Saving...').prop('disabled', true);
 
             // Send AJAX request
             $.ajax({
@@ -708,7 +824,7 @@
                     modifiedRows.delete(itemId);
 
                     // Reset button to original state
-                    $btn.text(originalText).prop('disabled', false)
+                    $btn.html(originalText).prop('disabled', false)
                         .css('background-color', '').css('color', '');
 
                     // Reset row background
@@ -723,7 +839,7 @@
                 error: function(xhr, status, error) {
                     console.error('Save error:', error);
                     alert('Error saving changes. Please try again.');
-                    $btn.text(originalText).prop('disabled', false);
+                    $btn.html(originalText).prop('disabled', false);
                 }
             });
         }
@@ -736,7 +852,7 @@
 
                 formData.append('id', itemId);
 
-                // Get ALL inputs using the same logic as saveRow
+                // Get ALL inputs
                 $row.find('.row-input').each(function() {
                     var fieldName = $(this).data('field');
                     var fieldValue = $(this).val();
@@ -799,39 +915,6 @@
             });
         }
 
-        // Enhanced helper function to map labels to field names
-        function getFieldNameFromLabel(label) {
-            var mapping = {
-                'Zone': 'zone',
-                'Item Name': 'item_name',
-                'Power (A)': 'power_draw_amps',
-                'ID': 'identifier',
-                'Notes': 'notes'
-            };
-
-            // Direct mapping first
-            if (label in mapping) {
-                return mapping[label];
-            }
-
-            // Check for custom columns by looking at all table headers
-            var foundField = null;
-            $('#inventoryTable thead th').each(function() {
-                var headerText = $(this).text().trim();
-                if (headerText === label) {
-                    // Try to find the corresponding input in the first row
-                    var colIndex = $(this).index();
-                    var $firstRowInput = $('#inventoryTable tbody tr:first td').eq(colIndex).find('.row-input');
-                    if ($firstRowInput.length) {
-                        foundField = $firstRowInput.data('field');
-                        return false; // Break the loop
-                    }
-                }
-            });
-
-            return foundField || label.toLowerCase().replace(/\s+/g, '_');
-        }
-
         // Add event listener for responsive display events
         table.on('responsive-display', function (e, datatable, row, showHide, update) {
             console.log('Row display changed:', showHide, 'for row with ID:', $(row.node()).data('id'));
@@ -839,9 +922,7 @@
             // When a row is expanded/collapsed, re-scan for inputs
             var itemId = $(row.node()).data('id');
             if (itemId) {
-                // If the row was just expanded, we might need to re-bind events
                 if (showHide) {
-                    // Row was expanded - inputs are now visible
                     setTimeout(function() {
                         var $expandedRow = $(row.node()).next('tr.child');
                         $expandedRow.find('.row-input').off('input').on('input', function() {
@@ -901,39 +982,6 @@
 
         // Focus on new column name field when adding column
         $('input[name="column_name"]').focus();
-
-        // Toggle custom columns section in add form
-        // Add toggle button for custom columns
-        if ($('#addItemForm .custom-columns-section').length) {
-            $('#addItemForm').prepend(
-                '<button type="button" id="toggleCustomColumns" class="btn" style="background-color: #6c757d; margin-bottom: 10px; font-size: 0.85em;">' +
-                'Show Additional Fields' +
-                '</button>'
-            );
-
-            // Initially hide custom columns
-            $('#addItemForm .custom-columns-section').hide();
-
-            // Toggle visibility
-            $('#toggleCustomColumns').on('click', function() {
-                var $section = $('#addItemForm .custom-columns-section');
-                var isVisible = $section.is(':visible');
-
-                if (isVisible) {
-                    $section.slideUp();
-                    $(this).html('Show Additional Fields');
-                } else {
-                    $section.slideDown();
-                    $(this).html('Hide Additional Fields');
-                }
-            });
-        }
-
-        // Auto-focus on Zone field when page loads
-        $('input[name="zone"]').focus();
-
-        // Debug logging
-        console.log('Inventory manager initialized. Responsive mode:', table.responsive ? 'enabled' : 'disabled');
 
         // Prevent row collapse if there are unsaved changes (optional)
         table.on('responsive-pre-collapse', function(e, datatable, row) {
