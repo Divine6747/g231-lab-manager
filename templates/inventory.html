@@ -4,986 +4,302 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>G231 Lab Manager</title>
-    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css">
-    <link rel="stylesheet" href="https://cdn.datatables.net/responsive/2.5.0/css/responsive.dataTables.min.css">
     <script src="https://kit.fontawesome.com/75b24b3695.js" crossorigin="anonymous"></script>
     <style>
-        * {
-            box-sizing: border-box;
+        /* --- MODERN & TIDY STYLING --- */
+        * { box-sizing: border-box; }
+        body { font-family: 'Inter', -apple-system, sans-serif; margin: 0; padding: 20px; background-color: #f0f2f5; color: #333; }
+        
+        .container { background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); margin-bottom: 25px; max-width: 1600px; margin-left: auto; margin-right: auto; }
+        
+        h2, h3 { margin-top: 0; color: #1a1a1a; font-weight: 600; font-size: 1.25rem; }
+
+        /* Form Sections */
+        .form-section { border-radius: 10px; padding: 20px; border: 1px solid #e1e4e8; }
+        .bg-add { background-color: #f6fffa; border-color: #d1e7dd; }
+        .bg-manage { background-color: #f8fbff; border-color: #cfe2ff; }
+        .bg-tools { background-color: #fffdf5; border-color: #fff3cd; }
+
+        .btn { padding: 10px 16px; border: none; border-radius: 6px; cursor: pointer; font-weight: 500; display: inline-flex; align-items: center; gap: 8px; transition: all 0.2s; font-size: 0.9rem; }
+        .btn-add { background-color: #0d6efd; color: white; }
+        .btn-save { background-color: #198754; color: white; padding: 8px 12px; }
+        .btn-save:hover { background-color: #157347; transform: translateY(-1px); }
+        .btn-delete { color: #dc3545; background: none; border: none; padding: 8px; border-radius: 6px; }
+        .btn-delete:hover { background: #fee2e2; }
+
+        .form-row { display: flex; flex-wrap: wrap; gap: 15px; margin-bottom: 15px; }
+        .form-col { flex: 1; min-width: 180px; }
+        label { display: block; font-size: 0.8rem; font-weight: 700; margin-bottom: 6px; color: #64748b; text-transform: uppercase; }
+        
+        /* Tidy Ghost Inputs */
+        .form-input, .row-input { 
+            width: 100%; padding: 10px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 0.95rem; transition: all 0.2s;
+        }
+        .row-input { border-color: transparent; background: transparent; }
+        .row-input:focus, .row-input:hover { background: white; border-color: #3b82f6; outline: none; box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1); }
+
+        /* Sticky Grid Design */
+        .inventory-grid { width: 100%; border-collapse: separate; border-spacing: 0; }
+        .grid-header { 
+            display: flex; 
+            background: #f8fafc; 
+            border-bottom: 2px solid #e2e8f0; 
+            padding: 12px 10px; 
+            position: sticky; 
+            top: 0; 
+            z-index: 10;
+            font-weight: 700;
+            color: #475569;
+        }
+        .grid-row { display: flex; border-bottom: 1px solid #f1f5f9; padding: 8px 10px; align-items: center; transition: background 0.1s; }
+        .grid-row:hover { background-color: #f8fafc; }
+        .grid-row.hidden { display: none; }
+        .grid-cell { padding: 4px 6px; flex: 1; min-width: 0; }
+        
+        /* Column Widths */
+        .col-check { flex: 0 0 45px; }
+        .col-zone { flex: 0 0 110px; }
+        .col-power { flex: 0 0 100px; }
+        .col-actions { flex: 0 0 130px; text-align: right; display: flex; gap: 5px; justify-content: flex-end; }
+
+        /* Mobile Adjustments */
+        @media (max-width: 1024px) {
+            .grid-header { display: none; }
+            .grid-row { flex-direction: column; align-items: stretch; border-bottom: 6px solid #f1f5f9; padding: 20px; }
+            .grid-cell { display: flex; align-items: center; padding: 10px 0; border-bottom: 1px solid #f8fafc; }
+            .grid-cell::before { content: attr(data-label); font-weight: 700; width: 140px; color: #64748b; font-size: 0.75rem; }
+            .col-check, .col-zone, .col-power, .col-actions { flex: 1; }
         }
 
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            margin: 0;
-            padding: 0;
-            background-color: #f4f7f6;
-            line-height: 1.6;
-        }
-
-        .container {
-            background: white;
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.08);
-            margin-bottom: 20px;
-            max-width: 1200px;
-            margin-left: auto;
-            margin-right: auto;
-        }
-
-        .form-section {
-            background: #e9ecef;
-            padding: 15px;
-            border-radius: 8px;
-        }
-
-        .btn {
-            padding: 8px 12px;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            color: white;
-            text-decoration: none;
-            font-size: 0.9em;
-            display: inline-block;
-            text-align: center;
-        }
-
-        .btn-add {
-            background-color: #007bff;
-        }
-
-        .btn-save {
-            background-color: #28a745;
-        }
-
-        .btn-delete {
-            color: #dc3545;
-            font-size: 0.8em;
-            margin-left: 8px;
-            background: none;
-            border: none;
-            text-decoration: none;
-            cursor: pointer;
-        }
-
-        .management-buttons {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 10px;
-            margin-top: 15px;
-        }
-
-        .management-buttons .btn {
-            flex: 1;
-            min-width: 160px;
-        }
-
-        h2, h3 {
-            margin-top: 0;
-            color: #2c3e50;
-        }
-
-        h2 {
-            padding-bottom: 10px;
-        }
-
-        /* Table container */
-        .table-container {
-            margin: 20px 0;
-            border-radius: 8px;
-            border: 1px solid #dee2e6;
-        }
-
-        /* Toast Notification */
-        #undoToast {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            background: #333;
-            color: white;
-            padding: 15px 25px;
-            border-radius: 8px;
-            z-index: 1000;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
-            transition: opacity 0.5s;
-        }
-
-        /* Column Management */
-        .column-tag {
-            background: #e3f2fd;
-            padding: 5px 10px;
-            border-radius: 4px;
-            margin: 5px;
-            display: inline-block;
-            border: 1px solid #bbdefb;
-        }
-
-        /* Form Styles */
-        .form-group {
-            margin-bottom: 15px;
-        }
-
-        .form-label {
-            display: block;
-            margin-bottom: 5px;
-            font-weight: 500;
-            color: #495057;
-        }
-
-        .form-input {
-            width: 100%;
-            padding: 8px 12px;
-            border: 1px solid #ced4da;
-            border-radius: 4px;
-            font-size: 0.9em;
-        }
-
-        .form-input:focus {
-            border-color: #80bdff;
-            outline: 0;
-            box-shadow: 0 0 0 0.2rem rgba(0,123,255,.25);
-        }
-
-        .form-row {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 15px;
-            margin-bottom: 15px;
-        }
-
-        .form-col {
-            flex: 1;
-            min-width: 150px;
-        }
-
-        /* Column Form Styles */
-        .column-form {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 10px;
-            align-items: center;
-            margin-bottom: 15px;
-        }
-
-        .column-form input,
-        .column-form select {
-            padding: 8px 12px;
-            border: 1px solid #ced4da;
-            border-radius: 4px;
-            flex: 1;
-            min-width: 150px;
-        }
-
-        /* Custom Columns Section */
-        .custom-columns-section {
-            margin-bottom: 15px;
-            padding: 15px;
-            background: #f8f9fa;
-            border-radius: 4px;
-            border: 1px solid #dee2e6;
-        }
-
-        .custom-columns-section h4 {
-            margin-top: 0;
-            margin-bottom: 15px;
-            font-size: 1em;
-            color: #495057;
-            font-weight: 600;
-        }
-
-        /* Mobile-Specific Styles */
-        @media (max-width: 768px) {
-            .container {
-                padding: 15px;
-                margin: 10px;
-                border-radius: 6px;
-            }
-
-            body {
-                padding: 10px;
-            }
-
-            .management-buttons .btn {
-                min-width: 140px;
-                font-size: 0.85em;
-                padding: 8px 12px;
-            }
-
-            #undoToast {
-                top: 10px;
-                right: 10px;
-                left: 10px;
-                max-width: none;
-                text-align: center;
-            }
-
-            h2 {
-                font-size: 1.5em;
-            }
-
-            h3 {
-                font-size: 1.2em;
-            }
-
-            .form-row {
-                flex-direction: column;
-                gap: 10px;
-            }
-
-            .form-col {
-                width: 100%;
-            }
-
-            .column-tag {
-                font-size: 0.9em;
-                padding: 4px 8px;
-            }
-
-            .column-form {
-                flex-direction: column;
-                align-items: stretch;
-            }
-
-            .column-form input,
-            .column-form select,
-            .column-form button {
-                width: 100%;
-                margin-bottom: 8px;
-            }
-        }
-
-        @media (max-width: 480px) {
-            .container {
-                padding: 12px;
-                margin: 5px;
-            }
-
-            .btn {
-                padding: 6px 10px;
-                font-size: 0.85em;
-            }
-
-            .actions-column {
-                min-width: 100px;
-            }
-
-            .bulk-actions {
-                flex-direction: column;
-            }
-
-            .bulk-actions input,
-            .bulk-actions button {
-                width: 100%;
-                margin-bottom: 8px;
-            }
-        }
-
-        /* DataTables Customization */
-        .dataTables_wrapper {
-            margin-top: 20px;
-        }
-
-        .dataTables_filter input {
-            padding: 8px 12px;
-            border-radius: 4px;
-            border: 1px solid #ced4da;
-        }
-
-        .dataTables_length select {
-            padding: 8px;
-            border-radius: 4px;
-        }
-
-        /* Bulk Actions Styling */
-        .bulk-actions {
-            background: #fff3cd;
-            padding: 15px;
-            border-radius: 8px;
-            margin-bottom: 15px;
-        }
-
-        .bulk-form {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 10px;
-            align-items: center;
-        }
-
-        .bulk-form input[type="text"] {
-            flex: 1;
-            min-width: 150px;
-        }
-
-        /* Checkbox Styling */
-        .bulk-check {
-            width: 20px;
-            height: 20px;
-            cursor: pointer;
-        }
-
-        /* Action Buttons Container */
-        .action-buttons {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 5px;
-            align-items: center;
-        }
-
-        /* Status Indicator for Mobile */
-        .mobile-status {
-            display: none;
-            font-size: 0.8em;
-            color: #666;
-            margin-top: 5px;
-        }
-
-        @media (max-width: 768px) {
-            .mobile-status {
-                display: block;
-            }
-        }
-
-        /* Toggle Button */
-        .toggle-btn {
-            background-color: #6c757d;
-            color: white;
-            border: none;
-            padding: 8px 12px;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 0.85em;
-            margin-bottom: 15px;
-        }
-
-        .toggle-btn:hover {
-            background-color: #5a6268;
-        }
+        .column-tag { background: #eff6ff; color: #1e40af; padding: 4px 10px; border-radius: 6px; font-size: 0.8rem; font-weight: 600; display: inline-flex; align-items: center; gap: 6px; border: 1px solid #dbeafe; margin: 2px; }
     </style>
 </head>
 <body>
 
-    {% if session.get('show_undo') %}
-    <div id="undoToast">
-        <span>Changes Saved.</span>
-        <a href="/undo" style="color: #ffc107; text-decoration: none; font-weight: bold; border: 1px solid #ffc107; padding: 2px 8px; border-radius: 4px;">UNDO</a>
-    </div>
-    {% endif %}
-
-    <!-- System Management Section -->
-    <div class="container">
-        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px;">
-            <div>
-                <h2>System Management</h2>
-                <p class="mobile-status">Manage lab equipment inventory</p>
-            </div>
-            <div class="management-buttons">
-                <a href="/download_backup" class="btn" style="background-color: #6c757d;">
-                    <i class="fa-solid fa-database"></i> Backup DB
-                </a>
-                <a href="/download_csv" class="btn" style="background-color: #28a745;">
-                    <i class="fa-solid fa-file-csv"></i> Export CSV
-                </a>
-                <!-- SAVE ALL BUTTON -->
-                <button type="button" class="btn" id="saveAllBtn" style="background-color: #6610f2;">
-                    <i class="fa-solid fa-save"></i> Save All Changes
-                </button>
-            </div>
+    <div class="container" style="display: flex; justify-content: space-between; align-items: center;">
+        <h2 style="margin:0;"><i class="fa-solid fa-server" style="color:#3b82f6;"></i> Lab Inventory Systems</h2>
+        <div style="display: flex; gap: 10px;">
+            <a href="/download_backup" class="btn" style="background-color: #4b5563; color: white;"><i class="fa-solid fa-database"></i> Backup</a>
+            <a href="/download_csv" class="btn" style="background-color: #10b981; color: white;"><i class="fa-solid fa-file-export"></i> CSV</a>
+            <button type="button" class="btn" id="saveAllBtn" style="background-color: #6366f1; color: white;"><i class="fa-solid fa-cloud-arrow-up"></i> Save All</button>
         </div>
     </div>
 
-    <!-- Add New Lab Asset Form (WITH CUSTOM COLUMNS) -->
-    <div class="container">
-        <div class="form-section" style="background-color: #cdfdeb;">
-            <h3>Add New Lab Asset</h3>
-            
-            <form action="/add_item" method="POST" id="addItemForm">
-                <!-- Core Fields -->
-                <div class="form-row">
-                    <div class="form-col">
-                        <label class="form-label">Zone</label>
-                        <input type="text" name="zone" class="form-input" placeholder="Zone" required>
-                    </div>
-                    <div class="form-col">
-                        <label class="form-label">Item Name</label>
-                        <input type="text" name="name" class="form-input" placeholder="Item Name" required>
-                    </div>
-                    <div class="form-col">
-                        <label class="form-label">Serial/MAC ID</label>
-                        <input type="text" name="id_val" class="form-input" placeholder="Serial/MAC ID">
-                    </div>
-                    <div class="form-col">
-                        <label class="form-label">Power (Amps)</label>
-                        <input type="number" step="0.1" name="power" class="form-input" placeholder="Amps">
-                    </div>
-                </div>
-                
-                <div class="form-group">
-                    <label class="form-label">Notes</label>
-                    <textarea name="notes" class="form-input" placeholder="Notes" rows="2" style="resize: vertical;"></textarea>
-                </div>
-
-                <!-- Custom Columns Section -->
-                {% if custom_columns %}
-                <button type="button" id="toggleCustomColumns" class="toggle-btn">
-                    <i class="fa-solid fa-plus"></i> Show Additional Fields
-                </button>
-                
-                <div class="custom-columns-section" style="display: none;">
-                    <h4>Additional Information</h4>
-                    <div class="form-row">
-                        {% for col_name, display_name, col_type in custom_columns %}
-                        <div class="form-col">
-                            <label class="form-label">
-                                {{ display_name or col_name.replace('custom_', '') }}
-                            </label>
-                            {% if col_type in ['INTEGER', 'REAL'] %}
-                            <input type="number"
-                                   {% if col_type == 'REAL' %}step="0.01"{% endif %}
-                                   name="{{ col_name }}"
-                                   class="form-input"
-                                   placeholder="{{ display_name or col_name.replace('custom_', '') }}">
-                            {% elif col_type == 'DATE' %}
-                            <input type="date"
-                                   name="{{ col_name }}"
-                                   class="form-input">
-                            {% else %}
-                            <input type="text"
-                                   name="{{ col_name }}"
-                                   class="form-input"
-                                   placeholder="{{ display_name or col_name.replace('custom_', '') }}">
-                            {% endif %}
-                        </div>
-                        {% endfor %}
-                    </div>
-                </div>
-                {% endif %}
-
-                <div style="text-align: center; margin-top: 20px;">
-                    <button type="submit" class="btn btn-add" style="width: 100%; max-width: 300px; margin: 0 auto; display: block;">
-                        <i class="fa-solid fa-plus"></i> Add to Inventory
-                    </button>
-                </div>
+    <div class="container" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap: 20px; background: transparent; padding: 0; box-shadow: none;">
+        
+        <div class="form-section bg-manage">
+            <h3><i class="fa-solid fa-table-columns"></i> Manage Columns</h3>
+            <form action="/add_column" method="POST" class="form-row">
+                <input type="text" name="column_name" class="form-input" style="flex:2" placeholder="Field Name" required>
+                <select name="column_type" class="form-input" style="flex:1">
+                    <option value="TEXT">Text</option>
+                    <option value="INTEGER">Number</option>
+                </select>
+                <button type="submit" class="btn btn-add"><i class="fa-solid fa-plus"></i></button>
             </form>
-        </div>
-    </div>
-
-    <!-- Custom Columns Management -->
-    <div class="container form-section" style="background-color: #e3f2fd;">
-        <h3>Manage Custom Columns</h3>
-        <form action="/add_column" method="POST" class="column-form">
-            <input type="text" name="column_name" class="form-input" placeholder="Column Name (e.g., Warranty Expiry)" required>
-            <input type="text" name="display_name" class="form-input" placeholder="Display Name (optional)">
-            <select name="column_type" class="form-input">
-                <option value="TEXT">Text</option>
-                <option value="INTEGER">Number</option>
-                <option value="REAL">Decimal</option>
-                <option value="DATE">Date</option>
-            </select>
-            <button type="submit" class="btn" style="background-color: #2196f3;">
-                <i class="fa-solid fa-plus"></i> Add Column
-            </button>
-        </form>
-
-        <div style="margin-top: 10px;">
-            <small style="color: #666; font-weight: 500;">Existing custom columns:</small>
-            <div id="customColumnsList" style="margin-top: 10px;">
+            <div style="max-height: 60px; overflow-y: auto;">
                 {% for col in custom_columns %}
-                <span class="column-tag">
-                    <i class="fa-solid fa-columns" style="margin-right: 5px;"></i>
-                    {{ col[1] or col[0].replace('custom_', '') }}
-                    <a href="/delete_column/{{ col[0] }}" style="color: #f44336; margin-left: 8px; text-decoration: none; font-weight: bold;"
-                       onclick="return confirm('Delete this column? All data in this column will be lost.')">
-                       <i class="fa-solid fa-times"></i>
-                    </a>
+                <span class="column-tag">{{ col[1] or col[0] }} 
+                    <a href="/delete_column/{{ col[0] }}" onclick="return confirm('Delete column?')" style="color:#ef4444;"><i class="fa-solid fa-xmark"></i></a>
                 </span>
                 {% endfor %}
-                {% if not custom_columns %}
-                <span style="color: #666; font-style: italic; display: block; padding: 10px; background: #f8f9fa; border-radius: 4px;">
-                    <i class="fa-solid fa-info-circle"></i> No custom columns yet. Add one above.
-                </span>
-                {% endif %}
+            </div>
+        </div>
+
+        <div class="form-section bg-tools">
+            <h3><i class="fa-solid fa-bolt"></i> Bulk Actions</h3>
+            <div class="form-row">
+                <div style="flex:1;">
+                    <label>Move to Zone</label>
+                    <div style="display: flex; gap: 5px;">
+                        <input type="text" form="bulkForm" name="new_zone" class="form-input" placeholder="Zone">
+                        <button type="submit" form="bulkForm" class="btn" style="background:#f59e0b; color:white;"><i class="fa-solid fa-right-from-bracket"></i></button>
+                    </div>
+                </div>
+                <div style="flex:1;">
+                    <label>Selection</label>
+                    <button type="submit" form="bulkForm" name="action" value="delete" class="btn" style="background:#ef4444; color:white; width: 100%;" onclick="return confirm('Delete selected?')"><i class="fa-solid fa-trash-can"></i> Delete</button>
+                </div>
             </div>
         </div>
     </div>
 
-    <!-- Bulk Actions and Table -->
-    <div class="container">
-        <div class="bulk-actions">
-            <h3>Bulk Actions</h3>
-            <form action="/bulk_update" method="POST" id="bulkForm" class="bulk-form">
-                <div id="bulkInputs"></div>
-                <input type="text" name="new_zone" class="form-input" placeholder="Move to Zone">
-                <button type="submit" class="btn" style="background-color: #856404;">
-                    <i class="fa-solid fa-arrows-alt-h"></i> Apply to Selected
-                </button>
-                <small style="color: #666; width: 100%; margin-top: 5px;">
-                    <i class="fa-solid fa-info-circle"></i> Select items from the table below first
-                </small>
-            </form>
-        </div>
-
-        <div class="table-container">
-            <table id="inventoryTable" class="display" style="width:100%">
-                <thead>
-                    <tr>
-                        <th width="40px">Sel</th>
-                        <th width="80px">Zone</th>
-                        <th>Item Name</th>
-                        <th width="90px">Power (A)</th>
-                        <th>ID</th>
-                        <th>Notes</th>
-                        <!-- Dynamic custom columns -->
-                        {% for col_name, display_name, col_type in custom_columns %}
-                        <th>{{ display_name or col_name.replace('custom_', '') }}</th>
-                        {% endfor %}
-                        <th class="actions-column">Actions</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for item in items %}
-                    <tr data-id="{{ item.id }}">
-                        <td><input type="checkbox" class="bulk-check" value="{{ item.id }}"></td>
-                        <td>
-                            <input type="text" name="zone" value="{{ item.zone }}"
-                                   class="row-input form-input" data-field="zone" data-id="{{ item.id }}"
-                                   style="width: 100%; max-width: 70px;">
-                        </td>
-                        <td>
-                            <input type="text" name="item_name" value="{{ item.item_name }}"
-                                   class="row-input form-input" data-field="item_name" data-id="{{ item.id }}"
-                                   style="width: 100%; min-width: 150px;">
-                        </td>
-                        <td>
-                            <input type="number" step="0.1" name="power_draw_amps"
-                                   value="{{ item.power_draw_amps }}"
-                                   class="row-input form-input" data-field="power_draw_amps" data-id="{{ item.id }}"
-                                   style="width: 100%; max-width: 80px;">
-                        </td>
-                        <td>
-                            <input type="text" name="identifier" value="{{ item.identifier }}"
-                                   class="row-input form-input" data-field="identifier" data-id="{{ item.id }}"
-                                   style="width: 100%; min-width: 150px;">
-                        </td>
-                        <td>
-                            <input type="text" name="notes" value="{{ item.notes }}"
-                                   class="row-input form-input" data-field="notes" data-id="{{ item.id }}"
-                                   style="width: 100%; min-width: 180px;">
-                        </td>
-
-                        <!-- Dynamic custom column inputs -->
-                        {% for col_name, display_name, col_type in custom_columns %}
-                        <td>
-                            {% if col_type in ['INTEGER', 'REAL'] %}
-                            <input type="number" {% if col_type == 'REAL' %}step="0.01"{% endif %}
-                                   name="{{ col_name }}" value="{{ item[col_name] if item[col_name] else '' }}"
-                                   class="row-input form-input" data-field="{{ col_name }}" data-id="{{ item.id }}"
-                                   style="width: 100%; min-width: 120px;">
-                            {% elif col_type == 'DATE' %}
-                            <input type="date" name="{{ col_name }}" value="{{ item[col_name] if item[col_name] else '' }}"
-                                   class="row-input form-input" data-field="{{ col_name }}" data-id="{{ item.id }}"
-                                   style="width: 100%; min-width: 120px;">
-                            {% else %}
-                            <input type="text" name="{{ col_name }}" value="{{ item[col_name] if item[col_name] else '' }}"
-                                   class="row-input form-input" data-field="{{ col_name }}" data-id="{{ item.id }}"
-                                   style="width: 100%; min-width: 120px;">
-                            {% endif %}
-                        </td>
-                        {% endfor %}
-
-                        <td class="actions-column">
-                            <div class="action-buttons">
-                                <button type="button" class="btn btn-save save-row-btn"
-                                        data-id="{{ item.id }}" style="padding: 8px 12px; font-size: 0.85em;">
-                                    <i class="fa-solid fa-save"></i> Save
-                                </button>
-                                <a href="/duplicate/{{ item.id }}" class="btn"
-                                   style="color:#666; font-size:0.8em; background: none; padding: 8px 12px;">
-                                    <i class="fa-solid fa-copy"></i> Copy
-                                </a>
-                                <a href="/delete/{{ item.id }}" class="btn-delete"
-                                   onclick="return confirm('Delete this item?')">
-                                    <i class="fa-solid fa-trash"></i> Del
-                                </a>
-                            </div>
-                        </td>
-                    </tr>
+    <div class="container bg-add form-section">
+        <h3><i class="fa-solid fa-circle-plus"></i> Add New Lab Asset</h3>
+        <form action="/add_item" method="POST">
+            <div class="form-row">
+                <div class="form-col"><label>Zone</label><input type="text" name="zone" class="form-input" required></div>
+                <div class="form-col"><label>Item Name</label><input type="text" name="name" class="form-input" required></div>
+                <div class="form-col"><label>Identifier</label><input type="text" name="id_val" class="form-input"></div>
+                <div class="form-col"><label>Amps</label><input type="number" step="0.1" name="power" class="form-input"></div>
+            </div>
+            <button type="button" id="toggleCustomColumns" class="btn" style="background-color: #94a3b8; color: white; margin-bottom:15px;"><i class="fa-solid fa-layer-group"></i> Toggle Custom Fields</button>
+            <div id="customFieldsSection" style="display: none; padding: 15px; border: 1px dashed #cbd5e1; border-radius: 8px; margin-bottom: 15px;">
+                <div class="form-row">
+                    {% for col_name, display_name, col_type in custom_columns %}
+                    <div class="form-col">
+                        <label>{{ display_name or col_name }}</label>
+                        <input type="text" name="{{ col_name }}" class="form-input">
+                    </div>
                     {% endfor %}
-                </tbody>
-            </table>
+                </div>
+            </div>
+            <button type="submit" class="btn btn-add" style="width: 100%; justify-content: center;"><i class="fa-solid fa-plus"></i> Add Asset</button>
+        </form>
+    </div>
+
+    <div class="container" style="padding: 15px 25px;">
+        <div class="form-row" style="margin-bottom:0; align-items: center;">
+           <div style="flex: 3; position: relative;" class="search-wrapper">
+                <i class="fa-solid fa-magnifying-glass" style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: #94a3b8;"></i>
+                <input type="text" id="globalSearch" class="form-input" placeholder="Global Search..." style="padding-left: 35px;">
+            </div>
+            <div style="width: 160px;">
+                <select id="zoneFilter" class="form-input">
+                    <option value="">All Zones</option>
+                </select>
+            </div>
+            <div style="width: 130px;">
+                <select id="entriesLimit" class="form-input">
+                    <option value="25" selected>25 rows</option>
+                    <option value="50">50 rows</option>
+                    <option value="all">All</option>
+                </select>
+            </div>
         </div>
     </div>
 
-<script src="https://code.jquery.com/jquery-3.7.0.js"></script>
-<script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
-<script src="https://cdn.datatables.net/responsive/2.5.0/js/dataTables.responsive.min.js"></script>
-<script>
-    $(document).ready(function() {
-        // Initialize DataTables with responsive plugin
-        var table = $('#inventoryTable').DataTable({
-            "pageLength": 5,
-            "lengthMenu": [[5, 10, 25, -1], [5, 10, 25, "All"]],
-            "order": [[1, "asc"]],
-            "stateSave": true,
-            "responsive": {
-                details: {
-                    display: $.fn.dataTable.Responsive.display.childRowImmediate,
-                    type: ''
-                }
-            },
-            "columnDefs": [
-                {
-                    "targets": 0, // Select checkbox column
-                    "orderable": false,
-                    "searchable": false,
-                    "responsivePriority": 1
-                },
-                {
-                    "targets": '_all', // All columns except checkbox
-                    "render": function(data, type, row, meta) {
-                        if (meta.col === 0) return data; // Skip checkbox column
+    <div class="container" style="padding: 0; overflow: visible;">
+        <form action="/bulk_update" method="POST" id="bulkForm">
+            <div class="inventory-grid">
+                <div class="grid-header">
+                    <div class="grid-cell col-check"><input type="checkbox" id="selectAll"></div>
+                    <div class="grid-cell col-zone">Zone</div>
+                    <div class="grid-cell" style="flex: 1.5;">Item Name</div>
+                    <div class="grid-cell col-power">Amps</div>
+                    <div class="grid-cell">Identifier</div>
+                    {% for col_name, display_name, col_type in custom_columns %}
+                    <div class="grid-cell">{{ display_name or col_name }}</div>
+                    {% endfor %}
+                    <div class="grid-cell col-actions">Action</div>
+                </div>
 
-                        if (type === 'filter' || type === 'sort') {
-                            var temp = document.createElement('div');
-                            temp.innerHTML = data;
-                            var input = temp.querySelector('input');
-                            return input ? input.value : data;
-                        }
-                        return data;
-                    }
-                }
-            ]
-        });
+                <div id="gridBody">
+                    {% for item in items %}
+                    <div class="grid-row" data-id="{{ item.id }}" data-zone="{{ item.zone }}">
+                        <div class="grid-cell col-check">
+                            <input type="checkbox" name="item_ids" value="{{ item.id }}" class="bulk-check">
+                        </div>
+                        <div class="grid-cell col-zone" data-label="Zone">
+                            <input type="text" value="{{ item.zone }}" class="row-input" data-field="zone" data-id="{{ item.id }}">
+                        </div>
+                        <div class="grid-cell" style="flex: 1.5;" data-label="Item Name">
+                            <input type="text" value="{{ item.item_name }}" class="row-input" data-field="item_name" data-id="{{ item.id }}">
+                        </div>
+                        <div class="grid-cell col-power" data-label="Amps">
+                            <input type="number" step="0.1" value="{{ item.power_draw_amps }}" class="row-input" data-field="power_draw_amps" data-id="{{ item.id }}">
+                        </div>
+                        <div class="grid-cell" data-label="Identifier">
+                            <input type="text" value="{{ item.identifier }}" class="row-input" data-field="identifier" data-id="{{ item.id }}">
+                        </div>
+                        {% for col_name, display_name, col_type in custom_columns %}
+                        <div class="grid-cell" data-label="{{ display_name or col_name }}">
+                            <input type="text" value="{{ item[col_name] or '' }}" class="row-input" data-field="{{ col_name }}" data-id="{{ item.id }}">
+                        </div>
+                        {% endfor %}
+                        <div class="grid-cell col-actions">
+                            <button type="button" class="btn btn-save save-row-btn" data-id="{{ item.id }}" title="Save changes">
+                                <i class="fa-solid fa-floppy-disk"></i>
+                            </button>
+                            <a href="/delete/{{ item.id }}" class="btn-delete" onclick="return confirm('Delete?')"><i class="fa-solid fa-trash-can"></i></a>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </form>
+    </div>
 
-        // Toggle custom columns in add form
-        $('#toggleCustomColumns').on('click', function() {
-            var $section = $('.custom-columns-section');
-            var isVisible = $section.is(':visible');
+    <script src="https://code.jquery.com/jquery-3.7.0.js"></script>
+    <script>
+        $(document).ready(function() {
+            const modifiedRows = new Set();
 
-            if (isVisible) {
-                $section.slideUp();
-                $(this).html('<i class="fa-solid fa-plus"></i> Show Additional Fields');
-            } else {
-                $section.slideDown();
-                $(this).html('<i class="fa-solid fa-minus"></i> Hide Additional Fields');
-            }
-        });
+            function applyFilters() {
+                const search = $('#globalSearch').val().toLowerCase();
+                const zone = $('#zoneFilter').val();
+                const limit = $('#entriesLimit').val();
+                let count = 0;
 
-        // Auto-focus on Zone field when page loads
-        $('input[name="zone"]').focus();
+                $('.grid-row').each(function() {
+                    const $row = $(this);
+                    const text = $row.find('.row-input').map(function() { return $(this).val(); }).get().join(' ').toLowerCase();
+                    const rowZone = $row.data('zone');
 
-        // Track modified rows
-        var modifiedRows = new Set();
-
-        // When any input changes, mark the row as modified
-        $(document).on('input', '.row-input', function() {
-            var itemId = $(this).data('id');
-            modifiedRows.add(itemId);
-
-            // Highlight the save button for this row
-            $('.save-row-btn[data-id="' + itemId + '"]')
-                .css('background-color', '#ffc107')
-                .css('color', '#212529');
-
-            // Highlight the row
-            $('tr[data-id="' + itemId + '"]').css('background-color', '#fff9e6');
-        });
-
-        // Individual row save button handler
-        $(document).on('click', '.save-row-btn', function(e) {
-            e.preventDefault();
-            var itemId = $(this).data('id');
-            saveRow(itemId, $(this));
-        });
-
-        // Save All button handler
-        $('#saveAllBtn').on('click', function(e) {
-            e.preventDefault();
-
-            if (modifiedRows.size === 0) {
-                alert('No changes to save.');
-                return;
-            }
-
-            var $btn = $(this);
-            var originalText = $btn.html();
-            $btn.html('<i class="fa-solid fa-spinner fa-spin"></i> Saving All...').prop('disabled', true);
-
-            // Save each modified row
-            var promises = [];
-            modifiedRows.forEach(function(itemId) {
-                promises.push(saveRowPromise(itemId));
-            });
-
-            // Wait for all saves to complete
-            Promise.all(promises).then(function() {
-                // Clear modified rows
-                modifiedRows.clear();
-
-                // Reset all save buttons to original style
-                $('.save-row-btn').css('background-color', '').css('color', '');
-
-                // Reset row backgrounds
-                $('tr[data-id]').css('background-color', '');
-
-                // Reset Save All button
-                $btn.html(originalText).prop('disabled', false);
-
-                // Redirect to show the undo toast
-                window.location.href = '/?saved=all';
-            }).catch(function(error) {
-                alert('Error saving some changes: ' + error);
-                $btn.html(originalText).prop('disabled', false);
-            });
-        });
-
-        // Function to save a single row
-        function saveRow(itemId, $btn) {
-            var $row = $('tr[data-id="' + itemId + '"]');
-            var formData = new FormData();
-
-            // Add the item ID
-            formData.append('id', itemId);
-
-            console.log('Saving row with ID:', itemId);
-
-            // Get ALL inputs from the row
-            $row.find('.row-input').each(function() {
-                var fieldName = $(this).data('field');
-                var fieldValue = $(this).val();
-                if (fieldName) {
-                    formData.append(fieldName, fieldValue);
-                    console.log('Main row - Field:', fieldName, 'Value:', fieldValue);
-                }
-            });
-
-            // Check if there's a responsive child row
-            var $childRow = $row.next('tr.child');
-            if ($childRow.length) {
-                console.log('Found child row for item ID:', itemId);
-
-                // Get inputs from the child row's detail table
-                $childRow.find('.dtr-details table td input.row-input').each(function() {
-                    var fieldName = $(this).data('field');
-                    var fieldValue = $(this).val();
-                    if (fieldName) {
-                        formData.append(fieldName, fieldValue);
-                        console.log('Child row - Field:', fieldName, 'Value:', fieldValue);
-                    }
+                    if (text.includes(search) && (zone === "" || rowZone == zone)) {
+                        if (limit === "all" || count < parseInt(limit)) {
+                            $row.removeClass('hidden'); count++;
+                        } else { $row.addClass('hidden'); }
+                    } else { $row.addClass('hidden'); }
                 });
             }
 
-            // Also check if DataTables has rendered the inputs differently
-            var rowData = table.row($row).data();
-            if (rowData) {
-                for (var i = 1; i < rowData.length - 1; i++) {
-                    var cellContent = rowData[i];
-                    if (cellContent && typeof cellContent === 'string') {
-                        var tempDiv = document.createElement('div');
-                        tempDiv.innerHTML = cellContent;
-                        var input = tempDiv.querySelector('input.row-input');
+            $('#globalSearch, #zoneFilter, #entriesLimit').on('input change', applyFilters);
 
-                        if (input) {
-                            var fieldName = $(input).data('field');
-                            var fieldValue = input.value;
+            // Populate Filter
+            const zones = new Set();
+            $('.grid-row').each(function() { if($(this).data('zone')) zones.add($(this).data('zone')); });
+            zones.forEach(z => $('#zoneFilter').append(`<option value="${z}">${z}</option>`));
 
-                            if (fieldName && !formData.has(fieldName)) {
-                                formData.append(fieldName, fieldValue);
-                                console.log('DataTables data - Field:', fieldName, 'Value:', fieldValue);
-                            }
-                        }
-                    }
-                }
-            }
-
-            // Show saving state
-            var originalText = $btn.html();
-            $btn.html('<i class="fa-solid fa-spinner fa-spin"></i> Saving...').prop('disabled', true);
-
-            // Send AJAX request
-            $.ajax({
-                url: '/update',
-                method: 'POST',
-                data: formData,
-                processData: false,
-                contentType: false,
-                headers: {
-                    'X-Requested-With': 'XMLHttpRequest'
-                },
-                success: function(response) {
-                    // Remove from modified rows
-                    modifiedRows.delete(itemId);
-
-                    // Reset button to original state
-                    $btn.html(originalText).prop('disabled', false)
-                        .css('background-color', '').css('color', '');
-
-                    // Reset row background
-                    $row.css('background-color', '');
-
-                    // Refresh the table data
-                    table.row($row).invalidate().draw(false);
-
-                    // Redirect to show undo toast
-                    window.location.href = '/?saved=' + itemId;
-                },
-                error: function(xhr, status, error) {
-                    console.error('Save error:', error);
-                    alert('Error saving changes. Please try again.');
-                    $btn.html(originalText).prop('disabled', false);
-                }
+            // Tracking and Saving
+            $(document).on('input', '.row-input', function() {
+                const id = $(this).data('id');
+                modifiedRows.add(id);
+                $(`.grid-row[data-id="${id}"]`).css('background-color', '#fffbeb');
+                $(`.save-row-btn[data-id="${id}"]`).css('background-color', '#f59e0b');
             });
-        }
 
-        // Function to save a row and return a promise
-        function saveRowPromise(itemId) {
-            return new Promise(function(resolve, reject) {
-                var $row = $('tr[data-id="' + itemId + '"]');
-                var formData = new FormData();
+            $(document).on('click', '.save-row-btn', function() {
+                saveRow($(this).data('id'), $(this));
+            });
 
-                formData.append('id', itemId);
-
-                // Get ALL inputs
-                $row.find('.row-input').each(function() {
-                    var fieldName = $(this).data('field');
-                    var fieldValue = $(this).val();
-                    if (fieldName) {
-                        formData.append(fieldName, fieldValue);
-                    }
+            function saveRow(id, $btn) {
+                const formData = new FormData();
+                formData.append('id', id);
+                $(`.grid-row[data-id="${id}"] .row-input`).each(function() {
+                    formData.append($(this).data('field'), $(this).val());
                 });
 
-                // Check child row
-                var $childRow = $row.next('tr.child');
-                if ($childRow.length) {
-                    $childRow.find('.dtr-details table td input.row-input').each(function() {
-                        var fieldName = $(this).data('field');
-                        var fieldValue = $(this).val();
-                        if (fieldName) {
-                            formData.append(fieldName, fieldValue);
-                        }
-                    });
-                }
-
-                // Also check DataTables data
-                var rowData = table.row($row).data();
-                if (rowData) {
-                    for (var i = 1; i < rowData.length - 1; i++) {
-                        var cellContent = rowData[i];
-                        if (cellContent && typeof cellContent === 'string') {
-                            var tempDiv = document.createElement('div');
-                            tempDiv.innerHTML = cellContent;
-                            var input = tempDiv.querySelector('input.row-input');
-
-                            if (input) {
-                                var fieldName = $(input).data('field');
-                                var fieldValue = input.value;
-
-                                if (fieldName && !formData.has(fieldName)) {
-                                    formData.append(fieldName, fieldValue);
-                                }
-                            }
-                        }
-                    }
-                }
-
+                const originalHtml = $btn.html();
+                $btn.html('<i class="fa-solid fa-spinner fa-spin"></i>').prop('disabled', true);
+                
                 $.ajax({
-                    url: '/update',
-                    method: 'POST',
-                    data: formData,
-                    processData: false,
-                    contentType: false,
-                    headers: {
-                        'X-Requested-With': 'XMLHttpRequest'
-                    },
-                    success: function(response) {
-                        table.row($row).invalidate();
-                        resolve(response);
-                    },
-                    error: function(xhr, status, error) {
-                        reject(error);
+                    url: '/update', method: 'POST', data: formData, processData: false, contentType: false,
+                    success: function() {
+                        modifiedRows.delete(id);
+                        $btn.html(originalHtml).prop('disabled', false).css('background-color', '');
+                        $(`.grid-row[data-id="${id}"]`).css('background-color', '');
                     }
                 });
-            });
-        }
-
-        // Add event listener for responsive display events
-        table.on('responsive-display', function (e, datatable, row, showHide, update) {
-            console.log('Row display changed:', showHide, 'for row with ID:', $(row.node()).data('id'));
-
-            // When a row is expanded/collapsed, re-scan for inputs
-            var itemId = $(row.node()).data('id');
-            if (itemId) {
-                if (showHide) {
-                    setTimeout(function() {
-                        var $expandedRow = $(row.node()).next('tr.child');
-                        $expandedRow.find('.row-input').off('input').on('input', function() {
-                            modifiedRows.add(itemId);
-                            $('.save-row-btn[data-id="' + itemId + '"]')
-                                .css('background-color', '#ffc107')
-                                .css('color', '#212529');
-                            $('tr[data-id="' + itemId + '"]').css('background-color', '#fff9e6');
-                        });
-                    }, 100);
-                }
             }
-        });
 
-        // Create and populate the Zone Filter Dropdown
-        $('<div style="display:inline-block; margin-left:15px;"><label>Zone: </label><select id="zFilt"><option value="">All</option></select></div>').insertAfter('.dataTables_length');
-
-        function buildFilter() {
-            var zones = [];
-            table.column(1).data().each(function(d) {
-                var temp = document.createElement('div');
-                temp.innerHTML = d;
-                var input = temp.querySelector('input');
-                var val = input ? input.value : '';
-                if (val && zones.indexOf(val) === -1) zones.push(val);
+            $('#saveAllBtn').click(function() {
+                if(modifiedRows.size === 0) return alert("No changes to save.");
+                const promises = Array.from(modifiedRows).map(id => {
+                    const formData = new FormData();
+                    formData.append('id', id);
+                    $(`.grid-row[data-id="${id}"] .row-input`).each(function() {
+                        formData.append($(this).data('field'), $(this).val());
+                    });
+                    return $.ajax({ url: '/update', method: 'POST', data: formData, processData: false, contentType: false });
+                });
+                Promise.all(promises).then(() => location.reload());
             });
-            zones.sort().forEach(function(z) {
-                $('#zFilt').append('<option value="'+z+'">'+z+'</option>');
-            });
-        }
 
-        buildFilter();
-
-        $('#zFilt').on('change', function() {
-            table.column(1).search(this.value).draw();
+            $('#toggleCustomColumns').on('click', function() { $('#customFieldsSection').slideToggle(); });
+            $('#selectAll').on('change', function() { $('.bulk-check:visible').prop('checked', this.checked); });
+            applyFilters();
         });
-
-        // Undo Toast removal logic
-        setTimeout(function() {
-            $('#undoToast').css('opacity', '0');
-            setTimeout(function() { $('#undoToast').remove(); }, 500);
-        }, 5000);
-
-        // Bulk update logic
-        $('#bulkForm').on('submit', function() {
-            $('#bulkInputs').empty();
-            $('.bulk-check:checked').each(function() {
-                $('#bulkInputs').append('<input type="hidden" name="item_ids" value="'+$(this).val()+'">');
-            });
-            return $('.bulk-check:checked').length > 0;
-        });
-
-        // Adjust table on window resize
-        $(window).on('resize', function() {
-            table.columns.adjust().responsive.recalc();
-        });
-
-        // Focus on the new column name field when adding a column
-        $('input[name="column_name"]').focus();
-
-        // Prevent row collapse if there are unsaved changes (optional)
-        table.on('responsive-pre-collapse', function(e, datatable, row) {
-            var itemId = $(row.node()).data('id');
-            if (modifiedRows.has(itemId)) {
-                e.preventDefault();
-                alert('Please save changes before collapsing this row.');
-                return false;
-            }
-        });
-    });
-</script>
+    </script>
 </body>
 </html>
